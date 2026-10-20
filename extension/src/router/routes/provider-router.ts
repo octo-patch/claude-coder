@@ -9,6 +9,7 @@ import { ProviderId } from "../../api/providers/constants"
 import { ApiConstructorOptions, ProviderSettings, providerSettingsSchema } from "../../api"
 import { OpenAICompatibleSettings, ProviderConfig } from "../../api/providers/types"
 import { openRouterConfig } from "../../api/providers/config/openrouter"
+import { getMiniMaxModel } from "../../api/providers/config/minimax"
 
 export async function getProvider(id: string) {
 	if (id === "kodu") {
@@ -101,7 +102,10 @@ export async function getCurrentModelInfo(apiConfig?: GlobalState["apiConfig"]) 
 		apiConfig = GlobalStateManager.getInstance().getGlobalState("apiConfig")
 	}
 	const providerData = await getModelProviderData(apiConfig?.providerId ?? "-")
-	const model = providerData.models?.find((m) => m.id === apiConfig?.modelId)
+	const model =
+		providerData.providerId === "minimax"
+			? getMiniMaxModel(apiConfig?.modelId)
+			: providerData.models?.find((m) => m.id === apiConfig?.modelId)
 	if (!model) {
 		throw new Error(`Model not found: ${apiConfig?.modelId}`)
 	}
@@ -178,6 +182,8 @@ const providerRouter = router({
 				const providerData = await getProvider(providerConfig.id)
 				const model = openaiCompatibleModel(providerData.provider as OpenAICompatibleSettings)
 				modelExists = model.id === input.modelId
+			} else if (providerConfig.id === "minimax") {
+				modelExists = !!getMiniMaxModel(input.modelId)
 			} else if (providerConfig.id === "openrouter") {
 				const models = await openRouterConfig.getModels?.()
 				modelExists = models?.some((m) => m.id === input.modelId) ?? false

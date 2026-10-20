@@ -7,6 +7,7 @@ export const MINIMAX_BASE_URL_GLOBAL = "https://api.minimax.io/v1"
 export const MINIMAX_BASE_URL_CN = "https://api.minimaxi.com/v1"
 export const MINIMAX_ANTHROPIC_BASE_URL_GLOBAL = "https://api.minimax.io/anthropic"
 export const MINIMAX_ANTHROPIC_BASE_URL_CN = "https://api.minimaxi.com/anthropic"
+export const MINIMAX_DEFAULT_MODEL = "MiniMax-M3.1-Flash"
 
 export const MINIMAX_ENDPOINTS = [
 	{
@@ -44,6 +45,21 @@ export const minimaxConfig: ProviderConfig = {
 	baseUrl: MINIMAX_BASE_URL_GLOBAL,
 	models: [
 		{
+			id: MINIMAX_DEFAULT_MODEL,
+			name: "MiniMax M3.1 Flash",
+			contextWindow: 1_000_000,
+			maxTokens: 524_288,
+			supportsImages: true,
+			inputModalities: ["text", "image", "video"],
+			supportsPromptCache: true,
+			inputPrice: 0.15,
+			outputPrice: 0.6,
+			cacheReadsPrice: 0.015,
+			isThinkingModel: true,
+			thinkingModes: ["adaptive"],
+			provider: PROVIDER_IDS.MINIMAX,
+		},
+		{
 			id: "MiniMax-M3",
 			name: "MiniMax M3",
 			contextWindow: 1_000_000,
@@ -51,6 +67,7 @@ export const minimaxConfig: ProviderConfig = {
 			supportsImages: true,
 			inputModalities: ["text", "image", "video"],
 			supportsPromptCache: true,
+			// Conservative estimate for prompts over 512k; shorter prompts cost half as much.
 			inputPrice: 0.6,
 			outputPrice: 2.4,
 			cacheReadsPrice: 0.12,
@@ -58,22 +75,29 @@ export const minimaxConfig: ProviderConfig = {
 			thinkingModes: ["adaptive", "disabled"],
 			provider: PROVIDER_IDS.MINIMAX,
 		},
-		{
-			id: "MiniMax-M2.7",
-			name: "MiniMax M2.7",
-			contextWindow: 204_800,
-			maxTokens: 204_800,
-			supportsImages: false,
-			inputModalities: ["text"],
-			supportsPromptCache: true,
-			inputPrice: 0.3,
-			outputPrice: 1.2,
-			cacheReadsPrice: 0.06,
-			cacheWritesPrice: 0.375,
-			isThinkingModel: true,
-			thinkingModes: ["always_on"],
-			provider: PROVIDER_IDS.MINIMAX,
-		},
 	],
 	requiredFields: ["apiKey"],
 }
+
+// Resolve saved selections without advertising legacy models in the ordinary catalog.
+export const minimaxLegacyModels: ProviderConfig["models"] = [
+	{
+		id: "MiniMax-M2.7",
+		name: "MiniMax M2.7",
+		contextWindow: 204_800,
+		maxTokens: 204_800,
+		supportsImages: false,
+		inputModalities: ["text"],
+		supportsPromptCache: true,
+		inputPrice: 0.3,
+		outputPrice: 1.2,
+		cacheReadsPrice: 0.06,
+		cacheWritesPrice: 0.375,
+		isThinkingModel: true,
+		thinkingModes: ["always_on"],
+		provider: PROVIDER_IDS.MINIMAX,
+	},
+]
+
+export const getMiniMaxModel = (modelId?: string) =>
+	[...minimaxConfig.models, ...minimaxLegacyModels].find((model) => model.id === (modelId || MINIMAX_DEFAULT_MODEL))

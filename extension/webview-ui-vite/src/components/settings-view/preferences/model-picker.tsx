@@ -4,6 +4,8 @@ import { Virtuoso } from "react-virtuoso"
 import Fuse from "fuse.js"
 
 import { ModelInfo } from "extension/api/providers/types"
+import { getMiniMaxModel } from "extension/api/providers/config/minimax"
+import { getSelectableModels } from "extension/api/providers/config/model-choices"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -52,14 +54,15 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
 	// Add search query state
 	const [searchQuery, setSearchQuery] = useState("")
 	// Currently selected model info
-	const selectedModel: ModelInfo | undefined = models.find(
-		(model) => model.id === modelId && model.provider === providerId
-	)
+	const selectedModel: ModelInfo | undefined =
+		models.find((model) => model.id === modelId && model.provider === providerId) ??
+		(providerId === "minimax" && modelId ? getMiniMaxModel(modelId) : undefined)
+	const selectableModels = useMemo(() => getSelectableModels(models), [models])
 	const switchToProvider = useSwitchToProviderManager()
 
 	// Create a Fuse instance for fuzzy searching
 	const fuse = useMemo(() => {
-		return new Fuse(models, {
+		return new Fuse(selectableModels, {
 			keys: [
 				{ name: "provider", weight: 1 },
 				{ name: "id", weight: 1 },
@@ -69,15 +72,15 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
 			ignoreLocation: true,
 			minMatchCharLength: 1,
 		})
-	}, [models])
+	}, [selectableModels])
 
 	// Create filtered models array based on search query with fuzzy matching
 	const filteredModels = useMemo(() => {
 		const query = searchQuery.trim().toLowerCase()
-		if (!query) return models
+		if (!query) return selectableModels
 
 		// First try exact matching for better performance
-		const exactMatches = models.filter((model) => {
+		const exactMatches = selectableModels.filter((model) => {
 			const providerModel = `${model.provider}/${model.id}/${model.name}`.toLowerCase()
 			return providerModel.includes(query)
 		})
@@ -89,7 +92,7 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
 		// Fall back to fuzzy search
 		const fuzzyResults = fuse.search(query)
 		return fuzzyResults.map((result) => result.item)
-	}, [models, searchQuery, fuse])
+	}, [selectableModels, searchQuery, fuse])
 	const {
 		data: currentModelInfo,
 		status: modelStatus,

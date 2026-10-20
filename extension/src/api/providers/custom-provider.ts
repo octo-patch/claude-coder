@@ -134,7 +134,7 @@ const providerToAISDKModel = (settings: ApiConstructorOptions, modelId: string):
 			if (isMiniMaxAnthropicEndpoint(minimaxBaseUrl)) {
 				return createAnthropic({
 					apiKey: settings.providerSettings.apiKey,
-					baseURL: minimaxBaseUrl,
+					baseURL: `${minimaxBaseUrl.replace(/\/+$/, "")}/v1`,
 					headers: {
 						"User-Agent": `Kodu/${version}`,
 					},

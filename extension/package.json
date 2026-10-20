@@ -162,6 +162,7 @@
 		"publish:pre-release": "pnpm vsce publish --pre-release --no-dependencies",
 		"lint": "eslint src",
 		"test": "vscode-test",
+		"test:minimax": "node --test --test-concurrency=1 test/minimax.test.cjs",
 		"dev": "tsx esbuild.ts --watch",
 		"start:webview": "cd webview-ui-vite && pnpm run dev",
 		"build:webview": "cd webview-ui-vite && pnpm run build",
